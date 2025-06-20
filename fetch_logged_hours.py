@@ -49,27 +49,39 @@ def get_worklogs_in_date_range(username, start_date, end_date):
         return 0.0
 
     # Fetch worklogs for each issue and aggregate logged time
-    print(f"JIRA-KEY\tTime Logged (hrs)")
     total_hours = 0.0
-    hour_logged_data = {}
+    hour_logged_issue_key = {}
+    hours_logged_date = {}
     for issue_key in issue_keys:
         worklog_url = f"https://{JIRA_DOMAIN}/rest/api/2/issue/{issue_key}/worklog"
         try:
             response = requests.get(worklog_url, headers=headers)
             response.raise_for_status()
-            if issue_key not in hour_logged_data:
-                hour_logged_data[issue_key] = 0
+            if issue_key not in hour_logged_issue_key:
+                hour_logged_issue_key[issue_key] = 0
             worklogs = response.json().get("worklogs", [])
             for log in worklogs:
                 log_date = log["started"].split("T")[0]  # Extract YYYY-MM-DD
+                if log_date not in hours_logged_date:
+                    hours_logged_date[log_date] = 0
                 if log["author"]["name"] == username and start_datetime <= log_date <= end_datetime:
                     timeSpentHours = log["timeSpentSeconds"] / 3600 # Convert seconds to hours
                     total_hours += timeSpentHours
-                    hour_logged_data[issue_key] += timeSpentHours
-            if len(worklogs) > 0:
-                print(f"{issue_key}\t{hour_logged_data[issue_key]}")
+                    hour_logged_issue_key[issue_key] += timeSpentHours
+                    hours_logged_date[log_date] += timeSpentHours
+                
         except Exception as e:
             print(f"Error fetching worklogs for {issue_key}: {e}")
+    print(f"JIRA_KEY\tHours_Logged")
+
+    for jira_key in sorted(hour_logged_issue_key.keys()):
+        print(f"{jira_key}\t{hour_logged_issue_key[jira_key]}")
+
+    print("\nDate\tHours_Logged")
+
+    for log_date in sorted(hours_logged_date.keys()):
+        print(f"{log_date}\t{hours_logged_date[log_date]}")
+
 
     return round(total_hours, 2)
 
@@ -78,10 +90,13 @@ if __name__ == "__main__":
     start_date = os.getenv("START_DATE")
     end_date = os.getenv("END_DATE")
 
+    if end_date == "today":
+        end_date = datetime.today().strftime("%Y-%m-%d")
+
     print(f"Logged-in User: {JIRA_AUTH_USERNAME}")
     print(f"Report generated for user: {username}")
     print(f"Worklog start date: {start_date}")
     print(f"Worklog end date: {end_date}")
     print("\n")
     total_hours = get_worklogs_in_date_range(username, start_date, end_date)
-    print(f"\nTotal hours logged by {username} between {start_date} and {end_date}: {total_hours} hours\n")
+    print(f"\nTotal hours logged: {total_hours} hours\n")

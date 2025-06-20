@@ -1,4 +1,4 @@
-# Jira APIs
+# Jira API Python
 
 ## Requirements
 

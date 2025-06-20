@@ -44,6 +44,6 @@ cp .env.example .env
 2. Run the script
 
 ```bash
-python fetch_logged_hours.py --username <username> --startdate "<yyyy-mm-dd" --enddate "yyyy-mm-dd"
+python fetch_logged_hours.py --username "<username>" --startdate "<yyyy-mm-dd>" --enddate "<yyyy-mm-dd>"
 ```
 

@@ -51,18 +51,23 @@ def get_worklogs_in_date_range(username, start_date, end_date):
     # Fetch worklogs for each issue and aggregate logged time
     print(f"JIRA-KEY\tTime Logged (hrs)")
     total_hours = 0.0
+    hour_logged_data = {}
     for issue_key in issue_keys:
         worklog_url = f"https://{JIRA_DOMAIN}/rest/api/2/issue/{issue_key}/worklog"
         try:
             response = requests.get(worklog_url, headers=headers)
             response.raise_for_status()
+            if issue_key not in hour_logged_data:
+                hour_logged_data[issue_key] = 0
             worklogs = response.json().get("worklogs", [])
             for log in worklogs:
                 log_date = log["started"].split("T")[0]  # Extract YYYY-MM-DD
                 if log["author"]["name"] == username and start_datetime <= log_date <= end_datetime:
                     timeSpentHours = log["timeSpentSeconds"] / 3600 # Convert seconds to hours
                     total_hours += timeSpentHours
-                    print(f"{issue_key}\t{timeSpentHours}")
+                    hour_logged_data[issue_key] += timeSpentHours
+            if len(worklogs) > 0:
+                print(f"{issue_key}\t{hour_logged_data[issue_key]}")
         except Exception as e:
             print(f"Error fetching worklogs for {issue_key}: {e}")
 

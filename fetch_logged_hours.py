@@ -2,6 +2,7 @@ import os
 from dotenv import load_dotenv
 import requests
 from datetime import datetime
+import argparse
 
 # Load environment variables from .env
 load_dotenv()
@@ -75,20 +76,33 @@ def get_worklogs_in_date_range(username, start_date, end_date):
     print(f"JIRA_KEY\tHours_Logged")
 
     for jira_key in sorted(hour_logged_issue_key.keys()):
-        print(f"{jira_key}\t{hour_logged_issue_key[jira_key]}")
+        if hour_logged_issue_key[jira_key] > 0:
+            print(f"{jira_key}\t{hour_logged_issue_key[jira_key]}")
 
     print("\nDate\tHours_Logged")
 
     for log_date in sorted(hours_logged_date.keys()):
-        print(f"{log_date}\t{hours_logged_date[log_date]}")
+        if hours_logged_date[log_date] > 0:
+            print(f"{log_date}\t{hours_logged_date[log_date]}")
 
 
-    return round(total_hours, 2)
+    return round(total_hours, 2), jql_query
 
 if __name__ == "__main__":
-    username = os.getenv("JIRA_USERNAME")
-    start_date = os.getenv("START_DATE")
-    end_date = os.getenv("END_DATE")
+
+    flag_parser = argparse.ArgumentParser()
+    flag_parser.add_argument("-u", "--username", required=True, help="Username for which you need to generate the report")
+    flag_parser.add_argument("-s", "--startdate", required=True, help="Username for which you need to generate the report")
+    flag_parser.add_argument("-e", "--enddate", required=True, help="Username for which you need to generate the report")
+
+    args = flag_parser.parse_args()
+    username = args.username
+    start_date = args.startdate
+    end_date = args.enddate
+
+    # username = os.getenv("JIRA_USERNAME")
+    # start_date = os.getenv("START_DATE")
+    # end_date = os.getenv("END_DATE")
 
     if end_date == "today":
         end_date = datetime.today().strftime("%Y-%m-%d")
@@ -98,5 +112,6 @@ if __name__ == "__main__":
     print(f"Worklog start date: {start_date}")
     print(f"Worklog end date: {end_date}")
     print("\n")
-    total_hours = get_worklogs_in_date_range(username, start_date, end_date)
+    total_hours, jql_query = get_worklogs_in_date_range(username, start_date, end_date)
     print(f"\nTotal hours logged: {total_hours} hours\n")
+    print(f"To List above listed issues in jira, use below JQL query\n{jql_query}\n")

@@ -34,7 +34,7 @@ pip install -r requirements.txt
 
 ### Run the python script
 
-1. Update `.env` file with your credential and details
+1. Update `.env` file with your credential and jira server details
 
 ```bash
 cp .env.example .env
@@ -44,6 +44,6 @@ cp .env.example .env
 2. Run the script
 
 ```bash
-python fetch_logged_hours.py
+python fetch_logged_hours.py --username <username> --startdate "<yyyy-mm-dd" --enddate "yyyy-mm-dd"
 ```
 

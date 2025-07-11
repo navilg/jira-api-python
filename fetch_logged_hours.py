@@ -3,7 +3,6 @@ from dotenv import load_dotenv
 import requests
 from datetime import datetime
 import argparse
-import pandas as pd
 
 # Load environment variables from .env
 load_dotenv()
@@ -12,7 +11,7 @@ JIRA_AUTH_USERNAME = os.getenv("JIRA_AUTH_USERNAME")
 JIRA_API_TOKEN = os.getenv("JIRA_API_TOKEN")
 JIRA_DOMAIN = os.getenv("JIRA_DOMAIN")
 
-def get_worklogs_in_date_range(username, start_date, end_date, export_to_excel):
+def get_worklogs_in_date_range(username, start_date, end_date):
     """
     Fetches total hours logged by a user between two dates.
     Date format: "YYYY-MM-DD"
@@ -86,24 +85,6 @@ def get_worklogs_in_date_range(username, start_date, end_date, export_to_excel):
         if hours_logged_date[log_date] > 0:
             print(f"{log_date}\t{hours_logged_date[log_date]}")
 
-    if export_to_excel:
-        df = pd.DataFrame.from_dict(hour_logged_issue_key, orient='index', columns=['Hours logged'])
-        df.index.name = 'Jira Issues'
-        df.reset_index(inplace=True)
-        df = df.sort_values(by=['Jira Issues'])
-
-        df.to_excel(f'{username}_jira_hours_logged_{start_date}_{end_date}.xlsx', index=False, sheet_name='Worklog by issues')
-
-        df = pd.DataFrame.from_dict(hours_logged_date, orient='index', columns=['Hours logged'])
-        df.index.name = 'Date'
-        df.reset_index(inplace=True)
-        df = df.sort_values(by=['Date'])
-
-        df.to_excel(f'{username}_jira_hours_logged_{start_date}_{end_date}.xlsx', index=False, sheet_name='Worklog by dates')
-
-        with pd.ExcelWriter('jira_hours_logged.xlsx', engine='openpyxl') as writer:
-            writer.book.properties.creator = "github.com/navilg"
-            writer.book.properties.modifiedBy = "github.com/navilg"
 
     return round(total_hours, 2), jql_query
 
@@ -113,13 +94,11 @@ if __name__ == "__main__":
     flag_parser.add_argument("-u", "--username", required=True, help="Username for which you need to generate the report")
     flag_parser.add_argument("-s", "--startdate", required=True, help="Username for which you need to generate the report")
     flag_parser.add_argument("-e", "--enddate", required=True, help="Username for which you need to generate the report")
-    flag_parser.add_argument("-x", "--export", action='store_true', default=False, help='If set, Data will be exported to excel sheet')
 
     args = flag_parser.parse_args()
     username = args.username
     start_date = args.startdate
     end_date = args.enddate
-    export_to_excel = args.export
 
     # username = os.getenv("JIRA_USERNAME")
     # start_date = os.getenv("START_DATE")
@@ -133,6 +112,6 @@ if __name__ == "__main__":
     print(f"Worklog start date: {start_date}")
     print(f"Worklog end date: {end_date}")
     print("\n")
-    total_hours, jql_query = get_worklogs_in_date_range(username, start_date, end_date, export_to_excel)
+    total_hours, jql_query = get_worklogs_in_date_range(username, start_date, end_date)
     print(f"\nTotal hours logged: {total_hours} hours\n")
     print(f"To List above listed issues in jira, use below JQL query\n{jql_query}\n")
